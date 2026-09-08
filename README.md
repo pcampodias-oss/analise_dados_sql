@@ -72,7 +72,6 @@
     e)Quantos imóveis foram subsidiados? | Quantidade 
 
 
-
     🔍 Análises
 
     💡 Subsídios por Estado
