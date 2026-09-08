@@ -20,7 +20,7 @@
     - 💰 Distribuição por faixa de renda
     - 👥 Distribuição por faixa etária
 
-    ---
+ 
 
     👥 Público-Alvo
 
@@ -36,7 +36,7 @@
 
     Fonte:
     Bases de dados oficiais do programa disponibilizadas pelo governo:
-    [Portal Dados MCMV - Gov.br](https://www.gov.br/cidades/pt-br/acesso-a-informacao/acoes-e-programas/habitacao/programa-minha-casa-minha-vida/bases-de-dados-do-programa-minha-casa-minha-vida)
+    Portal Dados MCMV - Gov.br - https://www.gov.br/cidades/pt-br/acesso-a-informacao/acoes-e-programas/habitacao/programa-minha-casa-minha-vida/bases-de-dados-do-programa-minha-casa-minha-vida
 
      Especificações
   
@@ -130,10 +130,10 @@
     Os arquivos com os scripts sql estão na pasta: scripts_sql
 
 
-    Passos
-    1. Criar as tabelas executando `create_tables.sql`
-    2. Carregar os dados com `load_data.sql`
-    3. Executar as análises em `analysis_queries.sql`
+    Passos:
+    1. Criação das tabelas e carga de dados: script_sql_criacao_tabela.sql
+    2. Tratamento dos dados: script_sql_tratamento_datas.sql e script_sql_tratamento_valores.sql
+    3. Execução  das análises: scripts_analise_dados_mcmv.sql`
 
     
 
@@ -147,17 +147,17 @@
 
     Patrícia Campos 
     Analista de TI  
-    [LinkedIn](link_seu_linkedin) | [GitHub](link_seu_github)
+    https://www.linkedin.com/in/patrícia-campos-dias-1b350822 |https://github.com/pcampodias-oss/analise_dados_sql
 
-    ---
+    
 
-    ## 📞 Contato
+     📞 Contato
 
     Para dúvidas ou sugestões sobre este projeto, entre em contato através de:
-    - 📧 Email: seu_email@email.com
-    - 💼 LinkedIn: [Seu Perfil]
+    - 📧 Email: pcampodias@gmail.com
+    - 💼 LinkedIn: https://www.linkedin.com/in/patrícia-campos-dias-1b350822
 
-    ---
+   
 
     Última atualização: 8 de Setembro de 2026
     
