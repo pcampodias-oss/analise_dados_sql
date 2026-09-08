@@ -1,0 +1,165 @@
+-- Valor total subsidiado FTGS/OGU
+
+mysql> select round(sum(vlr_subsidio_desconto_fgts),2) as 'Subsidio_FGTS', round(sum(vlr_subsidio_desconto_ogu),2) as 'Subsidio_OGU'
+    -> from tb_financiamento;
++---------------+--------------+
+| Subsidio_FGTS | Subsidio_OGU |
++---------------+--------------+
+|   83149912.49 |   5528126.62 |
++---------------+--------------+
+1 row in set (0.04 sec)
+
+-- Valor total financiado
+mysql> select round(sum(vlr_financiamento),2) as 'Valor_Financiado'
+    -> from tb_financiamento;
++------------------+
+| Valor_Financiado |
++------------------+
+|    1298431607.84 |
++------------------+
+1 row in set (0.01 sec)
+
+-- Valor médio de compra dos imóveis
+mysql> select round(avg(vlr_compra),2)  as 'Valor_Medio_Compra'
+    -> from tb_financiamento;
++--------------------+
+| Valor_Medio_Compra |
++--------------------+
+|          174680.98 |
++--------------------+
+1 row in set (0.01 sec)
+
+
+-- Valor médio da renda familiar
+select round(avg(vlr_renda_familiar),2)  as 'Valor_Medio_Renda_Familiar'
+from tb_financiamento;
+
+-- Quantidade de imóveis subsidiados
+select count(qtd_uh_financiadas) as 'Quantidade_Imoveis_Subsidiados'
+from tb_financiamento;
+
+
+-- Valor subsidio FGTS/OGU por estado
+
+select txt_uf as 'UF',round(sum(vlr_subsidio_desconto_fgts),2) as 'Subsidio_FGTS'
+from tb_financiamento
+group by txt_uf
+order by txt_uf;
+
+
+
+-- Valor subsidio FGTS/OGU por região
+
+Comando sql para formatar a saída do resultado abaixo como: R$ 1.298.431.607,84
+SELECT CONCAT(
+    'R$ ',
+    REPLACE(
+        REPLACE(
+            REPLACE(FORMAT(ROUND(SUM(vlr_financiamento), 2), 2), ',', '#'),
+            '.', ','
+        ),
+        '#', '.'
+    )
+) AS Valor_Financiado
+FROM tb_financiamento;
+
++---------------------+
+| Valor_Financiado    |
++---------------------+
+| R$ 1.298.431.607,84 |
++---------------------+
+1 row in set (0.01 sec)
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+-- Query final
+
+select 
+a.Subsidio_FGTS,
+b.Subsidio_OGU,
+c.Valor_Financiado,
+d.Valor_Medio_Compra,
+e.Valor_Medio_Renda_Familiar,
+f.Quantidade_Imoveis_Subsidiados
+FROM(SELECT CONCAT('R$ ',
+      REPLACE(
+        REPLACE(
+            REPLACE(FORMAT(ROUND(SUM(vlr_subsidio_desconto_fgts), 2), 2), ',', '#'),
+            '.', ','
+        ),
+        '#', '.'
+    )
+) AS Subsidio_FGTS
+FROM tb_financiamento) as a
+
+JOIN (SELECT CONCAT('R$ ',
+      REPLACE(
+        REPLACE(
+            REPLACE(FORMAT(ROUND(SUM(vlr_subsidio_desconto_ogu), 2), 2), ',', '#'),
+            '.', ','
+        ),
+        '#', '.'
+    )
+) AS Subsidio_OGU
+FROM tb_financiamento) as b
+
+JOIN(SELECT CONCAT('R$ ',
+      REPLACE(
+        REPLACE(
+            REPLACE(FORMAT(ROUND(SUM(vlr_financiamento), 2), 2), ',', '#'),
+            '.', ','
+        ),
+        '#', '.'
+    )
+) AS Valor_Financiado
+FROM tb_financiamento) as c
+
+JOIN(SELECT CONCAT('R$ ',
+      REPLACE(
+        REPLACE(
+            REPLACE(FORMAT(ROUND(AVG(vlr_compra), 2), 2), ',', '#'),
+            '.', ','
+        ),
+        '#', '.'
+    )
+) AS Valor_Medio_Compra
+FROM tb_financiamento) as d
+
+JOIN(SELECT CONCAT('R$ ',
+      REPLACE(
+        REPLACE(
+            REPLACE(FORMAT(ROUND(AVG(vlr_renda_familiar), 2), 2), ',', '#'),
+            '.', ','
+        ),
+        '#', '.'
+    )
+) AS Valor_Medio_Renda_Familiar
+FROM tb_financiamento) as e
+
+JOIN(SELECT REPLACE(FORMAT(COUNT(qtd_uh_financiadas),0),',','.') AS Quantidade_Imoveis_Subsidiados
+      FROM tb_financiamento
+)  as f;
+
+
+
++------------------+-----------------+---------------------+--------------------+----------------------------+--------------------------------+
+| Subsidio_FGTS    | Subsidio_OGU    | Valor_Financiado    | Valor_Medio_Compra | Valor_Medio_Renda_Familiar | Quantidade_Imoveis_Subsidiados |
++------------------+-----------------+---------------------+--------------------+----------------------------+--------------------------------+
+| R$ 83.149.912,49 | R$ 5.528.126,62 | R$ 1.298.431.607,84 | R$ 174.680,98      | R$ 3.462,20                | 10.000                         |
++------------------+-----------------+---------------------+--------------------+----------------------------+--------------------------------+
+1 row in set (0.40 sec)
+
+
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,557 @@
+-- Valor subsidio FGTS/OGU por estado
+
+select txt_uf, 
+ CONCAT('R$ ',
+      REPLACE(
+        REPLACE(
+            REPLACE(FORMAT(ROUND(SUM(vlr_subsidio_desconto_fgts), 2), 2), ',', '#'),
+            '.', ','
+        ),
+        '#', '.'
+    )) AS Subsidio_FGTS,
+	
+CONCAT('R$ ',
+      REPLACE(
+        REPLACE(
+            REPLACE(FORMAT(ROUND(SUM(vlr_subsidio_desconto_ogu), 2), 2), ',', '#'),
+            '.', ','
+        ),
+        '#', '.'
+    )) AS Subsidio_OGU	
+from tb_financiamento 
+group by txt_uf
+order by txt_uf;
+
+
++--------+------------------+-----------------+
+| txt_uf | Subsidio_FGTS    | Subsidio_OGU    |
++--------+------------------+-----------------+
+| AC     | R$ 90.100,55     | R$ 17.234,06    |
+| AL     | R$ 658.007,00    | R$ 0,00         |
+| AM     | R$ 1.416.934,52  | R$ 145.341,74   |
+| AP     | R$ 226.439,90    | R$ 606,10       |
+| BA     | R$ 2.280.038,00  | R$ 0,00         |
+| CE     | R$ 10.564.335,27 | R$ 828.459,03   |
+| DF     | R$ 601.489,00    | R$ 0,00         |
+| ES     | R$ 17.256,00     | R$ 0,00         |
+| GO     | R$ 4.637.426,12  | R$ 81.948,65    |
+| MA     | R$ 8.461.933,11  | R$ 784.710,82   |
+| MG     | R$ 1.507.431,00  | R$ 0,00         |
+| MS     | R$ 380.750,00    | R$ 0,00         |
+| MT     | R$ 340.972,65    | R$ 13.628,39    |
+| PA     | R$ 5.180.156,20  | R$ 430.586,76   |
+| PB     | R$ 12.669.925,90 | R$ 865.429,33   |
+| PE     | R$ 2.556.723,00  | R$ 0,00         |
+| PI     | R$ 6.152.514,34  | R$ 681.938,61   |
+| PR     | R$ 956.145,28    | R$ 17.373,73    |
+| RJ     | R$ 1.161.437,00  | R$ 0,00         |
+| RN     | R$ 13.942.656,25 | R$ 1.463.435,42 |
+| RO     | R$ 1.288.935,37  | R$ 158.310,19   |
+| RR     | R$ 369.385,45    | R$ 17.204,55    |
+| RS     | R$ 1.683.853,88  | R$ 21.779,94    |
+| SC     | R$ 148.266,00    | R$ 0,00         |
+| SE     | R$ 1.082.510,00  | R$ 0,00         |
+| SP     | R$ 4.626.010,00  | R$ 0,00         |
+| TO     | R$ 148.280,70    | R$ 139,30       |
++--------+------------------+-----------------+
+27 rows in set (0.04 sec)
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Valor subsidio FGTS/OGU por região
+
+select txt_regiao, 
+ CONCAT('R$ ',
+      REPLACE(
+        REPLACE(
+            REPLACE(FORMAT(ROUND(SUM(vlr_subsidio_desconto_fgts), 2), 2), ',', '#'),
+            '.', ','
+        ),
+        '#', '.'
+    )) AS Subsidio_FGTS,
+	
+CONCAT('R$ ',
+      REPLACE(
+        REPLACE(
+            REPLACE(FORMAT(ROUND(SUM(vlr_subsidio_desconto_ogu), 2), 2), ',', '#'),
+            '.', ','
+        ),
+        '#', '.'
+    )) AS Subsidio_OGU	
+from tb_financiamento 
+group by txt_regiao
+order by txt_regiao;
+
++--------------+------------------+-----------------+
+| txt_regiao   | Subsidio_FGTS    | Subsidio_OGU    |
++--------------+------------------+-----------------+
+| Centro-Oeste | R$ 5.960.637,77  | R$ 95.577,04    |
+| Nordeste     | R$ 58.368.642,87 | R$ 4.623.973,21 |
+| Norte        | R$ 8.720.232,69  | R$ 769.422,70   |
+| Sudeste      | R$ 7.312.134,00  | R$ 0,00         |
+| Sul          | R$ 2.788.265,16  | R$ 39.153,67    |
++--------------+------------------+-----------------+
+5 rows in set (0.05 sec)
+
+
+----------------------------------------------------------------------------------------------------------------------------
+
+-- Quantidade de imóveis subsidiados por faixa de renda
+
+select txt_compatibilidade_faixa_renda,count(qtd_uh_financiadas)
+from tb_financiamento
+group by txt_compatibilidade_faixa_renda;
++---------------------------------+---------------------------+
+| txt_compatibilidade_faixa_renda | count(qtd_uh_financiadas) |
++---------------------------------+---------------------------+
+| Faixa 1                         |                      3535 |
+| Faixa 3                         |                      2010 |
+| Faixa 2                         |                      4129 |
+| Classe Média                    |                       178 |
+| Fora MCMV                       |                       148 |
++---------------------------------+---------------------------+
+5 rows in set (0.03 sec)
+
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+-- Quantidade de imóveis subsidiados por gênero
+
+select co_sexo,count(qtd_uh_financiadas)
+from tb_financiamento
+group by co_sexo;
+# co_sexo, count(qtd_uh_financiadas)
+'M\r', '4661'
+'F\r', '4155'
+'NI\r', '1183'
+'M', '1'
+
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Quantidade de imóveis subsidiados por faixa etária
+
+select faixa_etaria,count(qtd_uh_financiadas)
+from tb_financiamento
+where faixa_etaria IS NOT NULL
+group by faixa_etaria;
++--------------+---------------------------+
+| faixa_etaria | count(qtd_uh_financiadas) |
++--------------+---------------------------+
+| 19-25        |                       994 |
+| 26-35        |                      2861 |
+| 46-55        |                       819 |
+| 55-65        |                       195 |
+| 36-45        |                      1991 |
+| acima de 65  |                        28 |
++--------------+---------------------------+
+6 rows in set (0.01 sec)
+------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Relação entre faixa de renda x faixa etária
+
+-- Criação da tabela faixa renda
+
+-- drop table tb_faixa_renda
+create table tb_faixa_renda
+(
+
+	cod_faixa_renda int auto_increment primary key,
+	faixa varchar(20),
+	vlr_area_urbana varchar(250),
+	vlr_area_rural varchar(250)
+	
+);
+
+Query OK, 0 rows affected (0.60 sec)
+
+start transaction;
+
+insert into tb_faixa_renda(faixa, vlr_area_urbana, vlr_area_rural)
+values('Faixa 1', '<= R$ 3.200,00', '<= R$ 50.000,00');
+Query OK, 1 row affected (0.04 sec)
+
+insert into tb_faixa_renda(faixa, vlr_area_urbana, vlr_area_rural)
+values('Faixa 2', 'de R$ 3.200,01 a R$ 5.000,00', 'de R$ 50.000,01 a R$ 70.900,00');
+Query OK, 1 row affected (0.04 sec)
+
+insert into tb_faixa_renda(faixa, vlr_area_urbana, vlr_area_rural)
+values('Faixa 3', 'de R$ 5.000,01 a R$ 9.600,00', 'de R$ 70.900,01 a R$ 134.000,00');
+Query OK, 1 row affected (0.04 sec)
+
+insert into tb_faixa_renda(faixa, vlr_area_urbana, vlr_area_rural)
+values('Faixa 4', 'de R$ 9.600,01 a R$ 13.000,00', '0,00');
+Query OK, 1 row affected (0.04 sec)
+
+
+mysql> select * from tb_faixa_renda;
++-----------------+---------+-------------------------------+---------------------------------+
+| cod_faixa_renda | faixa   | vlr_area_urbana               | vlr_area_rural                  |
++-----------------+---------+-------------------------------+---------------------------------+
+|               1 | Faixa 1 | <= R$ 3.200,00                | <= R$ 50.000,00                 |
+|               2 | Faixa 2 | de R$ 3.200,01 a R$ 5.000,00  | de R$ 50.000,01 a R$ 70.900,00  |
+|               3 | Faixa 3 | de R$ 5.000,01 a R$ 9.600,00  | de R$ 70.900,01 a R$ 134.000,00 |
+|               4 | Faixa 4 | de R$ 9.600,01 a R$ 13.000,00 | 0,00                            |
++-----------------+---------+-------------------------------+---------------------------------+
+4 rows in set (0.00 sec)
+
+mysql> commit;
+Query OK, 0 rows affected (0.04 sec)
+
+
+
+
+
+-- Alterar nome da coluna cod_faixa
+
+ALTER TABLE tb_faixa_renda
+CHANGE cod_faixa cod_faixa_renda int auto_increment 
+
+Query OK, 0 rows affected (1.03 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+
+-- Apagar chave estrangeira e criar outra. Não é possível alterar o nome diretamente.
+
+ALTER TABLE tb_financiamento
+DROP COLUMN cod_faixa;
+
+ALTER TABLE tb_financiamento
+DROP FOREIGN KEY fk_fin_faixa;
+
+
+-- Adicionando novamente a coluna 
+ALTER TABLE tb_financiamento
+ADD  cod_faixa_renda int;
+
+
+-- Criar chave estrangeira na tb_financiamento
+
+
+ALTER TABLE tb_financiamento
+ADD CONSTRAINT fk_fin_faixa
+FOREIGN KEY (cod_faixa_renda)
+REFERENCES tb_faixa_renda(cod_faixa_renda);
+
+Query OK, 10000 rows affected (0.44 sec)
+Records: 10000  Duplicates: 0  Warnings: 0
+
+
+-- Atualizar a coluna cod_faixa_renda
+select txt_compatibilidade_faixa_renda, count(*)
+from tb_financiamento 
+group by txt_compatibilidade_faixa_renda;
++---------------------------------+----------+
+| txt_compatibilidade_faixa_renda | count(*) |
++---------------------------------+----------+
+| Faixa 1                         |     3535 |
+| Faixa 3                         |     2010 |
+| Faixa 2                         |     4129 |
+| Classe Média                    |      178 |
+| Fora MCMV                       |      148 |
++---------------------------------+----------+
+5 rows in set (0.22 sec)
+
+select fin.txt_compatibilidade_faixa_renda, fx.faixa,fx.cod_faixa_renda as 'fx_faixa_renda', fin.cod_faixa_renda as 'fin_faixa_renda'
+from tb_financiamento fin
+inner join tb_faixa_renda fx on(fx.faixa = txt_compatibilidade_faixa_renda)
+limit 10;
++---------------------------------+---------+----------------+-----------------+
+| txt_compatibilidade_faixa_renda | faixa   | fx_faixa_renda | fin_faixa_renda |
++---------------------------------+---------+----------------+-----------------+
+| Faixa 1                         | Faixa 1 |              1 |            NULL |
+| Faixa 1                         | Faixa 1 |              1 |            NULL |
+| Faixa 1                         | Faixa 1 |              1 |            NULL |
+| Faixa 3                         | Faixa 3 |              3 |            NULL |
+| Faixa 2                         | Faixa 2 |              2 |            NULL |
+| Faixa 2                         | Faixa 2 |              2 |            NULL |
+| Faixa 3                         | Faixa 3 |              3 |            NULL |
+| Faixa 2                         | Faixa 2 |              2 |            NULL |
+| Faixa 3                         | Faixa 3 |              3 |            NULL |
+| Faixa 3                         | Faixa 3 |              3 |            NULL |
++---------------------------------+---------+----------------+-----------------+
+10 rows in set (0.04 sec)
+
+start transaction;
+
+update tb_financiamento fin
+inner join tb_faixa_renda fx on(fx.faixa = fin.txt_compatibilidade_faixa_renda)
+set fin.cod_faixa_renda = fx.cod_faixa_renda;
+
+Query OK, 9674 rows affected (0.76 sec)
+Rows matched: 9674  Changed: 9674  Warnings: 0
+
+
+mysql> select fin.txt_compatibilidade_faixa_renda, fx.faixa,fx.cod_faixa_renda as 'fx_faixa_renda', fin.cod_faixa_renda as 'fin_faixa_renda'
+    -> from tb_financiamento fin
+    -> inner join tb_faixa_renda fx on(fx.faixa = txt_compatibilidade_faixa_renda)
+    -> limit 10;
++---------------------------------+---------+----------------+-----------------+
+| txt_compatibilidade_faixa_renda | faixa   | fx_faixa_renda | fin_faixa_renda |
++---------------------------------+---------+----------------+-----------------+
+| Faixa 1                         | Faixa 1 |              1 |               1 |
+| Faixa 1                         | Faixa 1 |              1 |               1 |
+| Faixa 1                         | Faixa 1 |              1 |               1 |
+| Faixa 3                         | Faixa 3 |              3 |               3 |
+| Faixa 2                         | Faixa 2 |              2 |               2 |
+| Faixa 2                         | Faixa 2 |              2 |               2 |
+| Faixa 3                         | Faixa 3 |              3 |               3 |
+| Faixa 2                         | Faixa 2 |              2 |               2 |
+| Faixa 3                         | Faixa 3 |              3 |               3 |
+| Faixa 3                         | Faixa 3 |              3 |               3 |
++---------------------------------+---------+----------------+-----------------+
+10 rows in set (0.00 sec)
+
+mysql> commit;
+Query OK, 0 rows affected (0.42 sec)
+
+
+start transaction;
+
+update tb_financiamento fin
+set fin.cod_faixa_renda = 4
+where fin.txt_compatibilidade_faixa_renda = 'Classe Média';
+Query OK, 178 rows affected (0.06 sec)
+Rows matched: 178  Changed: 178  Warnings: 0
+
+
+select fin.txt_compatibilidade_faixa_renda, fx.faixa,fx.cod_faixa_renda as 'fx_faixa_renda', fin.cod_faixa_renda as 'fin_faixa_renda'
+from tb_financiamento fin
+inner join tb_faixa_renda fx on(fx.cod_faixa_renda = fin.cod_faixa_renda)
+where fin.txt_compatibilidade_faixa_renda = 'Classe Média'
+limit 10;
+
++---------------------------------+---------+----------------+-----------------+
+| txt_compatibilidade_faixa_renda | faixa   | fx_faixa_renda | fin_faixa_renda |
++---------------------------------+---------+----------------+-----------------+
+| Classe Média                    | Faixa 4 |              4 |               4 |
+| Classe Média                    | Faixa 4 |              4 |               4 |
+| Classe Média                    | Faixa 4 |              4 |               4 |
+| Classe Média                    | Faixa 4 |              4 |               4 |
+| Classe Média                    | Faixa 4 |              4 |               4 |
+| Classe Média                    | Faixa 4 |              4 |               4 |
+| Classe Média                    | Faixa 4 |              4 |               4 |
+| Classe Média                    | Faixa 4 |              4 |               4 |
+| Classe Média                    | Faixa 4 |              4 |               4 |
+| Classe Média                    | Faixa 4 |              4 |               4 |
++---------------------------------+---------+----------------+-----------------+
+10 rows in set (0.01 sec)
+
+mysql> commit;
+Query OK, 0 rows affected (0.93 sec)
+
+
+
+-- Inserir novo registro na tb_faixa_renda
+
+insert into tb_faixa_renda(faixa, vlr_area_urbana, vlr_area_rural)
+values('Fora MCMV', '0,00', '0,00');
+mysql> select * from tb_faixa_renda;
++-----------------+-----------+-------------------------------+---------------------------------+
+| cod_faixa_renda | faixa     | vlr_area_urbana               | vlr_area_rural                  |
++-----------------+-----------+-------------------------------+---------------------------------+
+|               1 | Faixa 1   | <= R$ 3.200,00                | <= R$ 50.000,00                 |
+|               2 | Faixa 2   | de R$ 3.200,01 a R$ 5.000,00  | de R$ 50.000,01 a R$ 70.900,00  |
+|               3 | Faixa 3   | de R$ 5.000,01 a R$ 9.600,00  | de R$ 70.900,01 a R$ 134.000,00 |
+|               4 | Faixa 4   | de R$ 9.600,01 a R$ 13.000,00 | 0,00                            |
+|               6 | Fora MCMV | 0,00                          | 0,00                            |
++-----------------+-----------+-------------------------------+---------------------------------+
+5 rows in set (0.00 sec)
+
+select fin.txt_compatibilidade_faixa_renda, fx.faixa,fx.cod_faixa_renda as 'fx_faixa_renda', fin.cod_faixa_renda as 'fin_faixa_renda'
+from tb_financiamento fin
+inner join tb_faixa_renda fx on(fx.faixa = fin.txt_compatibilidade_faixa_renda)
+where fin.txt_compatibilidade_faixa_renda = 'Fora MCMV'
+limit 10;
++---------------------------------+-----------+----------------+-----------------+
+| txt_compatibilidade_faixa_renda | faixa     | fx_faixa_renda | fin_faixa_renda |
++---------------------------------+-----------+----------------+-----------------+
+| Fora MCMV                       | Fora MCMV |              6 |            NULL |
+| Fora MCMV                       | Fora MCMV |              6 |            NULL |
+| Fora MCMV                       | Fora MCMV |              6 |            NULL |
+| Fora MCMV                       | Fora MCMV |              6 |            NULL |
+| Fora MCMV                       | Fora MCMV |              6 |            NULL |
+| Fora MCMV                       | Fora MCMV |              6 |            NULL |
+| Fora MCMV                       | Fora MCMV |              6 |            NULL |
+| Fora MCMV                       | Fora MCMV |              6 |            NULL |
+| Fora MCMV                       | Fora MCMV |              6 |            NULL |
+| Fora MCMV                       | Fora MCMV |              6 |            NULL |
++---------------------------------+-----------+----------------+-----------------+
+10 rows in set (0.01 sec)
+
+
+start transaction;
+
+update tb_financiamento fin
+set fin.cod_faixa_renda = 6
+where fin.txt_compatibilidade_faixa_renda = 'Fora MCMV';
+Query OK, 148 rows affected (0.03 sec)
+Rows matched: 148  Changed: 148  Warnings: 0
+
+select fin.txt_compatibilidade_faixa_renda, fx.faixa,fx.cod_faixa_renda as 'fx_faixa_renda', fin.cod_faixa_renda as 'fin_faixa_renda'
+from tb_financiamento fin
+inner join tb_faixa_renda fx on(fx.cod_faixa_renda = fin.cod_faixa_renda)
+where fin.txt_compatibilidade_faixa_renda = 'Fora MCMV'
+limit 10;
++---------------------------------+-----------+----------------+-----------------+
+| txt_compatibilidade_faixa_renda | faixa     | fx_faixa_renda | fin_faixa_renda |
++---------------------------------+-----------+----------------+-----------------+
+| Fora MCMV                       | Fora MCMV |              6 |               6 |
+| Fora MCMV                       | Fora MCMV |              6 |               6 |
+| Fora MCMV                       | Fora MCMV |              6 |               6 |
+| Fora MCMV                       | Fora MCMV |              6 |               6 |
+| Fora MCMV                       | Fora MCMV |              6 |               6 |
+| Fora MCMV                       | Fora MCMV |              6 |               6 |
+| Fora MCMV                       | Fora MCMV |              6 |               6 |
+| Fora MCMV                       | Fora MCMV |              6 |               6 |
+| Fora MCMV                       | Fora MCMV |              6 |               6 |
+| Fora MCMV                       | Fora MCMV |              6 |               6 |
++---------------------------------+-----------+----------------+-----------------+
+10 rows in set (0.01 sec)
+mysql> commit;
+Query OK, 0 rows affected (0.01 sec)
+
+
+
+select fin.txt_compatibilidade_faixa_renda, fx.faixa,fx.cod_faixa_renda as 'fx_faixa_renda', fin.cod_faixa_renda as 'fin_faixa_renda',count(*)
+from tb_financiamento fin
+inner join tb_faixa_renda fx on(fx.cod_faixa_renda = fin.cod_faixa_renda)
+group by fin.txt_compatibilidade_faixa_renda, fx.faixa,fx.cod_faixa_renda, fin.cod_faixa_renda;
++---------------------------------+-----------+----------------+-----------------+----------+
+| txt_compatibilidade_faixa_renda | faixa     | fx_faixa_renda | fin_faixa_renda | count(*) |
++---------------------------------+-----------+----------------+-----------------+----------+
+| Faixa 1                         | Faixa 1   |              1 |               1 |     3535 |
+| Faixa 2                         | Faixa 2   |              2 |               2 |     4129 |
+| Faixa 3                         | Faixa 3   |              3 |               3 |     2010 |
+| Classe Média                    | Faixa 4   |              4 |               4 |      178 |
+| Fora MCMV                       | Fora MCMV |              6 |               6 |      148 |
++---------------------------------+-----------+----------------+-----------------+----------+
+5 rows in set (0.37 sec)
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Relação entre faixa_renda x faixa etária 
+
+mysql> select * from tb_faixa_renda;
++-----------------+-----------+-------------------------------+---------------------------------+
+| cod_faixa_renda | faixa     | vlr_area_urbana               | vlr_area_rural                  |
++-----------------+-----------+-------------------------------+---------------------------------+
+|               1 | Faixa 1   | <= R$ 3.200,00                | <= R$ 50.000,00                 |
+|               2 | Faixa 2   | de R$ 3.200,01 a R$ 5.000,00  | de R$ 50.000,01 a R$ 70.900,00  |
+|               3 | Faixa 3   | de R$ 5.000,01 a R$ 9.600,00  | de R$ 70.900,01 a R$ 134.000,00 |
+|               4 | Faixa 4   | de R$ 9.600,01 a R$ 13.000,00 | 0,00                            |
+|               6 | Fora MCMV | 0,00                          | 0,00                            |
++-----------------+-----------+-------------------------------+---------------------------------+
+5 rows in set (0.00 sec)
+
+
+select fin.txt_compatibilidade_faixa_renda as 'Faixa de Renda',coalesce(fin.faixa_etaria,'Nao informado') as 'Faixa Etária',count(*)
+from tb_financiamento fin
+inner join tb_faixa_renda fx on(fx.cod_faixa_renda = fin.cod_faixa_renda)
+where fin.faixa_etaria is NOT NULL
+group by fin.txt_compatibilidade_faixa_renda, fin.faixa_etaria;
+
++---------------------------------+--------------------------------------------+----------+
+| txt_compatibilidade_faixa_renda | coalesce(fin.faixa_etaria,'Nao informado') | count(*) |
++---------------------------------+--------------------------------------------+----------+
+| Faixa 1                         | 19-25                                      |      512 |
+| Faixa 1                         | 26-35                                      |     1096 |
+| Faixa 1                         | Nao informado                              |      984 |
+| Faixa 1                         | 46-55                                      |      255 |
+| Faixa 1                         | 36-45                                      |      642 |
+| Faixa 1                         | 55-65                                      |       43 |
+| Faixa 1                         | acima de 65                                |        3 |
+| Faixa 2                         | 26-35                                      |     1079 |
+| Faixa 2                         | Nao informado                              |     1431 |
+| Faixa 2                         | 36-45                                      |      848 |
+| Faixa 2                         | 46-55                                      |      341 |
+| Faixa 2                         | 19-25                                      |      326 |
+| Faixa 2                         | 55-65                                      |       90 |
+| Faixa 2                         | acima de 65                                |       14 |
+| Faixa 3                         | 46-55                                      |      187 |
+| Faixa 3                         | 26-35                                      |      596 |
+| Faixa 3                         | 19-25                                      |      144 |
+| Faixa 3                         | Nao informado                              |      612 |
+| Faixa 3                         | 55-65                                      |       52 |
+| Faixa 3                         | acima de 65                                |        8 |
+| Faixa 3                         | 36-45                                      |      411 |
+| Classe Média                    | 26-35                                      |       66 |
+| Classe Média                    | 19-25                                      |       11 |
+| Classe Média                    | 55-65                                      |        4 |
+| Classe Média                    | Nao informado                              |       48 |
+| Classe Média                    | 46-55                                      |       12 |
+| Classe Média                    | 36-45                                      |       36 |
+| Classe Média                    | acima de 65                                |        1 |
+| Fora MCMV                       | 26-35                                      |       24 |
+| Fora MCMV                       | 36-45                                      |       54 |
+| Fora MCMV                       | 46-55                                      |       24 |
+| Fora MCMV                       | 19-25                                      |        1 |
+| Fora MCMV                       | Nao informado                              |       37 |
+| Fora MCMV                       | 55-65                                      |        6 |
+| Fora MCMV                       | acima de 65                                |        2 |
++---------------------------------+--------------------------------------------+----------+
+35 rows in set (0.09 sec)
+
+-- Relação entre faixa de renda x taxa juros
+
+select txt_compatibilidade_faixa_renda as 'Faixa Renda'  , round(avg(num_taxa_juros),2) as 'Taxa Juros'
+from tb_financiamento
+group by txt_compatibilidade_faixa_renda;
++---------------------------------+------------------------------+
+| txt_compatibilidade_faixa_renda | round(avg(num_taxa_juros),2) |
++---------------------------------+------------------------------+
+| Faixa 1                         |                          4.4 |
+| Faixa 3                         |                         6.32 |
+| Faixa 2                         |                         5.25 |
+| Classe Média                    |                          7.4 |
+| Fora MCMV                       |                         8.46 |
++---------------------------------+------------------------------+
+5 rows in set (0.34 sec)
+
+-- Valor médio da renda familiar x valor médio da taxa de juros
+select round(avg(vlr_renda_familiar),2) as 'Vlr. Médio Renda', round(avg(num_taxa_juros),2) as 'Vlr Médio Taxa'
+from tb_financiamento
+group by txt_compatibilidade_faixa_renda;
+
++----------------------------------+------------------------------+
+| round(avg(vlr_renda_familiar),2) | round(avg(num_taxa_juros),2) |
++----------------------------------+------------------------------+
+|                          1964.85 |                          4.4 |
+|                           6058.7 |                         6.32 |
+|                          2809.91 |                         5.25 |
+|                         10385.52 |                          7.4 |
+|                         13834.94 |                         8.46 |
++----------------------------------+------------------------------+
+5 rows in set (0.02 sec)
+
+-- Relação entre valor financiamento x valor subsídio(em %)
+
+select round(sum(vlr_financiamento),2), round(sum(vlr_subsidio_desconto_fgts),2), round((sum(vlr_subsidio_desconto_fgts) /sum(vlr_financiamento)) *100,2)
+from tb_financiamento;
++---------------------------------+------------------------------------------+-------------------------------------------------------------------------+
+| round(sum(vlr_financiamento),2) | round(sum(vlr_subsidio_desconto_fgts),2) | round((sum(vlr_subsidio_desconto_fgts) /sum(vlr_financiamento)) *100,2) |
++---------------------------------+------------------------------------------+-------------------------------------------------------------------------+
+|                   1298431607.84 |                              83149912.49 |                                                                     6.4 |
++---------------------------------+------------------------------------------+-------------------------------------------------------------------------+
+1 row in set (0.01 sec)
+
+
+-- Top 10 UF com maior volume de financiamentos
+select txt_uf, count(*)
+from tb_financiamento
+group by txt_uf
+order by count(*)
+desc limit 10;
++--------+----------+
+| txt_uf | count(*) |
++--------+----------+
+| SP     |     1542 |
+| CE     |     1295 |
+| RN     |     1103 |
+| PB     |      896 |
+| MA     |      835 |
+| PI     |      576 |
+| PA     |      552 |
+| GO     |      414 |
+| MG     |      384 |
+| PR     |      347 |
++--------+----------+
+10 rows in set (0.12 sec)

@@ -1,0 +1,396 @@
+-- Enriquecimento de base
+-- Cálculo de faixa etária 
+
+-- Cálculo da idade a partir da data atual
+
+SELECT COALESCE((DATE_FORMAT(CURDATE(), "%Y") - DATE_FORMAT(dte_nascimento, "%Y")),0) as 'idade', dte_nascimento
+from tb_financiamento limit 20;
++-------+----------------+
+| idade | dte_nascimento |
++-------+----------------+
+|    25 | 2001-04-01     |
+|    28 | 1998-05-25     |
+|    34 | 1992-05-26     |
+|    54 | 1972-02-04     |
+|    28 | 1998-07-30     |
+|    27 | 1999-09-23     |
+|    28 | 1998-12-13     |
+|     0 | 0000-00-00     |
+|    29 | 1997-08-21     |
+|    24 | 2002-06-29     |
+|    27 | 1999-09-02     |
+|     0 | 0000-00-00     |
+|    33 | 1993-02-08     |
+|    30 | 1996-01-26     |
+|     0 | 0000-00-00     |
+|    28 | 1998-03-14     |
+|    59 | 1967-08-28     |
+|    34 | 1992-05-28     |
+|    28 | 1998-06-21     |
+|    25 | 2001-03-12     |
++-------+----------------+
+20 rows in set, 3 warnings (0.00 sec)
+
+
+-- Criar coluna idade na tb_financiamento
+
+ALTER TABLE tb_financiamento
+ADD idade int;
+
+
+select idade from tb_financiamento limit 1;
++-------+
+| idade |
++-------+
+|  NULL |
++-------+
+1 row in set (0.04 sec)
+
+
+-- Inserir cálculo de idade na nova coluna idade
+
+start transaction;
+
+-- Ajuste das datas zeradas:
+
+UPDATE tb_financiamento SET dte_nascimento = NULL WHERE dte_nascimento = '0000-00-00';
+Query OK, 2977 rows affected (0.57 sec)
+Rows matched: 2977  Changed: 2977  Warnings: 0
+
+
+update tb_financiamento
+set idade = COALESCE((DATE_FORMAT(CURDATE(), "%Y") - DATE_FORMAT(dte_nascimento, "%Y")),0)
+
+
+Query OK, 10000 rows affected (0.83 sec)
+Rows matched: 10000  Changed: 10000  Warnings: 0
+
+/* sugestão da IA para tratar com CASE WHEN:
+UPDATE tb_financiamento
+SET idade = CASE 
+    WHEN dte_nascimento IS NULL THEN 0
+    WHEN dte_nascimento = '0000-00-00' THEN 0
+    ELSE TIMESTAMPDIFF(YEAR, dte_nascimento, CURDATE())
+END;*/
+
+
+mysql> select idade, dte_nascimento
+    -> from tb_financiamento
+    -> limit 20;
++-------+----------------+
+| idade | dte_nascimento |
++-------+----------------+
+|    25 | 2001-04-01     |
+|    28 | 1998-05-25     |
+|    34 | 1992-05-26     |
+|    54 | 1972-02-04     |
+|    28 | 1998-07-30     |
+|    27 | 1999-09-23     |
+|    28 | 1998-12-13     |
+|     0 | NULL           |
+|    29 | 1997-08-21     |
+|    24 | 2002-06-29     |
+|    27 | 1999-09-02     |
+|     0 | NULL           |
+|    33 | 1993-02-08     |
+|    30 | 1996-01-26     |
+|     0 | NULL           |
+|    28 | 1998-03-14     |
+|    59 | 1967-08-28     |
+|    34 | 1992-05-28     |
+|    28 | 1998-06-21     |
+|    25 | 2001-03-12     |
++-------+----------------+
+20 rows in set (0.00 sec)
+
+mysql> commit;
+Query OK, 0 rows affected (0.15 sec)
+
+
+-- Criar as faixas etárias 
+
+-- Criar coluna faixa etária
+
+ALTER TABLE tb_financiamento
+ADD faixa_etaria varchar(250);
+Query OK, 0 rows affected (0.81 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+
+select min(idade), max(idade) from tb_financiamento;
++------------+------------+
+| min(idade) | max(idade) |
++------------+------------+
+|          0 |        126 |
++------------+------------+
+1 row in set (0.04 sec)
+
+
+
+
+
+select count(*) from tb_financiamento
+where dte_nascimento = '1900-01-01';
++----------+
+| count(*) |
++----------+
+|      135 |
++----------+
+1 row in set (0.01 sec)
+
+select *
+from tb_financiamento
+where idade = 126;
+
++-----------------+----------+-----------------------------+--------+--------------+-------------------------------+--------------------+-------------------+----------------------------+---------------------------+------------------------------+-----------------------------+------------+--------------------+-------------------------------+----------------+-----------------+-------------+-------------------------+----------------+---------------------------------+-------------------------+---------+-------+--------------+
+| data_referencia | cod_ibge | txt_municipio               | txt_uf | txt_regiao   | data_assinatura_financiamento | qtd_uh_financiadas | vlr_financiamento | vlr_subsidio_desconto_fgts | vlr_subsidio_desconto_ogu | vlr_subsidio_equilíbrio_fgts | vlr_subsidio_equilíbrio_ogu | vlr_compra | vlr_renda_familiar | txt_programa_fgts             | num_taxa_juros | txt_tipo_imovel | bln_cotista | txt_sistema_amortizacao | dte_nascimento | txt_compatibilidade_faixa_renda | txt_nome_empreendimento | co_sexo | idade | faixa_etaria |
++-----------------+----------+-----------------------------+--------+--------------+-------------------------------+--------------------+-------------------+----------------------------+---------------------------+------------------------------+-----------------------------+------------+--------------------+-------------------------------+----------------+-----------------+-------------+-------------------------+----------------+---------------------------------+-------------------------+---------+-------+--------------+
+| 2025-12-05      | 110020   | Porto Velho                 | RO     | Norte        | 2018-11-06                    | 1                  | 101250.00         | 0.00                       | 0.00                      | 0.00                         | 0.00                        | 112500.00  | 6488.53            | Carta de Crédito - Individual | 7.66           | USADO           | X           |                         | 1900-01-01     | Faixa 3        |   126 | NULL         |                   | NI
+| 2025-12-05      | 110020   | Porto Velho                 | RO     | Norte        | 2017-10-31                    | 1                  | 122297.16         | 0.00                       | 0.00                      | 0.00                         | 0.00                        | 150000.00  | 4878.15            | Carta de Crédito - Individual | 8.16           | USADO           | X           |                         | 1900-01-01     | Faixa 3        |   126 | NULL         |                   | NI
+| 2025-12-05      | 110010   | Guajará-Mirim               | RO     | Norte        | 2018-04-04                    | 1                  | 80000.00          | 8120.00                    | 0.00                      | 21000.00                     | 0.00                        | 100000.00  | 1767.35            | Carta de Crédito - Individual | 5.00           | NOVO            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 110012   | Ji-Paraná                   | RO     | Norte        | 2017-05-22                    | 1                  | 104125.00         | 1899.00                    | 211.00                    | 4555.76                      | 506.19                      | 125000.00  | 2965.20            | Carta de Crédito - Individual | 6.50           | NOVO            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 110004   | Cacoal                      | RO     | Norte        | 2017-03-31                    | 1                  | 92781.34          | 8820.00                    | 980.00                    | 14400.00                     | 1600.00                     | 120000.00  | 1743.56            | Carta de Crédito - Individual | 5.00           | NOVO            | X           |                         | 1900-01-01     | Faixa 1        |   126 | NULL         |                   | NI
+| 2025-12-05      | 110030   | Vilhena                     | RO     | Norte        | 2019-03-13                    | 1                  | 90800.00          | 13288.50                   | 1476.50                   | 18900.00                     | 2100.00                     | 130000.00  | 1717.02            | Carta de Crédito - Individual | 5.00           | Novo            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 110030   | Vilhena                     | RO     | Norte        | 2017-05-15                    | 1                  | 74900.00          | 8820.00                    | 980.00                    | 14400.00                     | 1600.00                     | 110000.00  | 1574.85            | Carta de Crédito - Individual | 5.00           | NOVO            | X           |                         | 1900-01-01     | Faixa 1        |   126 | NULL         |                   | NI
+| 2025-12-05      | 110030   | Vilhena                     | RO     | Norte        | 2019-10-11                    | 1                  | 104000.00         | 1022.50                    | 0.00                      | 7211.18                      | 0.00                        | 130000.00  | 3234.53            | Carta de Crédito - Individual | 6.50           | Novo            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 150080   | Ananindeua                  | PA     | Norte        | 2017-04-10                    | 1                  | 90848.61          | 17972.10                   | 1996.90                   | 14400.00                     | 1600.00                     | 134000.00  | 1801.73            | Carta de Crédito - Individual | 5.50           | NOVO            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 150080   | Ananindeua                  | PA     | Norte        | 2019-11-01                    | 1                  | 87000.00          | 0.00                       | 0.00                      | 0.00                         | 0.00                        | 105000.00  | 5052.77            | Carta de Crédito - Individual | 7.66           | Usado           | X           |                         | 1900-01-01     | Faixa 3        |   126 | NULL         |                   | NI
+| 2025-12-05      | 150130   | Barcarena                   | PA     | Norte        | 2017-10-17                    | 1                  | 140000.00         | 0.00                       | 0.00                      | 0.00                         | 0.00                        | 172000.00  | 5777.32            | Pró-Cotista                   | 8.64           | NOVO            | X           |                         | 1900-01-01     | Faixa 3        |   126 | NULL         |                   | NI
+| 2025-12-05      | 150170   | Bragança                    | PA     | Norte        | 2018-10-31                    | 1                  | 95001.20          | 8998.92                    | 999.88                    | 18900.00                     | 2100.00                     | 120000.00  | 1900.00            | Carta de Crédito - Individual | 5.00           | NOVO            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 150240   | Castanhal                   | PA     | Norte        | 2016-12-26                    | 1                  | 81000.00          | 18000.00                   | 2000.00                   | 14400.00                     | 1600.00                     | 125000.00  | 1700.00            | Carta de Crédito - Individual | 5.50           | novo            | X           |                         | 1900-01-01     | Faixa 1        |   126 | NULL         |                   | NI
+| 2025-12-05      | 150240   | Castanhal                   | PA     | Norte        | 2017-10-31                    | 1                  | 73910.00          | 18981.00                   | 2109.00                   | 18900.00                     | 2100.00                     | 95000.00   | 1760.81            | Carta de Crédito - Individual | 5.50           | NOVO            | X           |                         | 1900-01-01     | Faixa 1        |   126 | NULL         |                   | NI
+| 2025-12-05      | 150240   | Castanhal                   | PA     | Norte        | 2017-11-14                    | 1                  | 74237.00          | 13286.70                   | 1476.30                   | 18900.00                     | 2100.00                     | 95000.00   | 1488.00            | Carta de Crédito - Individual | 5.50           | NOVO            | X           |                         | 1900-01-01     | Faixa 1        |   126 | NULL         |                   | NI
+| 2025-12-05      | 150240   | Castanhal                   | PA     | Norte        | 2017-05-29                    | 1                  | 64716.00          | 1480.50                    | 164.50                    | 14630.87                     | 1625.65                     | 82000.00   | 2880.91            | Apoio à Produção              | 5.50           | NOVO            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 211130   | São Luís                    | MA     | Nordeste     | 2017-08-09                    | 1                  | 115200.00         | 0.00                       | 0.00                      | 0.00                         | 0.00                        | 206000.00  | 5332.00            | Carta de Crédito - Individual | 8.16           | NOVO            | X           |                         | 1900-01-01     | Faixa 3        |   126 | NULL         |                   | NI
+| 2025-12-05      | 211130   | São Luís                    | MA     | Nordeste     | 2019-06-04                    | 1                  | 138355.00         | 0.00                       | 0.00                      | 0.00                         | 0.00                        | 175000.00  | 3482.24            | Carta de Crédito - Individual | 6.50           | Usado           | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 211130   | São Luís                    | MA     | Nordeste     | 2019-01-17                    | 1                  | 130000.00         | 0.00                       | 0.00                      | 0.00                         | 0.00                        | 170000.00  | 4400.76            | Carta de Crédito - Individual | 7.66           | Usado           | X           |                         | 1900-01-01     | Faixa 3        |   126 | NULL         |                   | NI
+| 2025-12-05      | 210120   | Bacabal                     | MA     | Nordeste     | 2018-03-14                    | 1                  | 108166.70         | 2619.00                    | 0.00                      | 21000.00                     | 0.00                        | 150000.00  | 2356.61            | Carta de Crédito - Individual | 5.00           | NOVO            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 210120   | Bacabal                     | MA     | Nordeste     | 2018-09-24                    | 1                  | 64625.00          | 15187.50                   | 1687.50                   | 18900.00                     | 2100.00                     | 95000.00   | 1220.58            | Carta de Crédito - Individual | 5.00           | NOVO            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 210330   | Codó                        | MA     | Nordeste     | 2019-05-07                    | 1                  | 63330.03          | 7593.75                    | 843.75                    | 18900.00                     | 2100.00                     | 98000.00   | 1300.00            | Carta de Crédito - Individual | 5.50           | Novo            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 210330   | Codó                        | MA     | Nordeste     | 2017-06-02                    | 1                  | 80000.00          | 16875.00                   | 0.00                      | 21000.00                     | 0.00                        | 105000.00  | 1781.00            | Carta de Crédito - Individual | 5.50           | NOVO            | X           |                         | 1900-01-01     | Faixa 1        |   126 | NULL         |                   | NI
+| 2025-12-05      | 210370   | Cururupu                    | MA     | Nordeste     | 2018-07-02                    | 1                  | 80000.00          | 10440.00                   | 1160.00                   | 18900.00                     | 2100.00                     | 100000.00  | 1700.00            | Carta de Crédito - Individual | 5.50           | NOVO            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 210380   | Dom Pedro                   | MA     | Nordeste     | 2017-10-11                    | 1                  | 80000.00          | 1755.00                    | 0.00                      | 19000.00                     | 0.00                        | 100000.00  | 2610.01            | Carta de Crédito - Individual | 5.50           | NOVO            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 210770   | Paraibano                   | MA     | Nordeste     | 2019-05-31                    | 1                  | 96000.00          | 1579.50                    | 175.50                    | 5849.99                      | 650.00                      | 120000.00  | 3675.00            | Carta de Crédito - Individual | 7.00           | Novo            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 210800   | Pastos Bons                 | MA     | Nordeste     | 2019-07-03                    | 1                  | 100000.00         | 0.00                       | 0.00                      | 0.00                         | 0.00                        | 125000.00  | 4665.76            | Carta de Crédito - Individual | 8.16           | Usado           | X           |                         | 1900-01-01     | Faixa 3        |   126 | NULL         |                   | NI
+| 2025-12-05      | 210800   | Pastos Bons                 | MA     | Nordeste     | 2018-01-25                    | 1                  | 40357.80          | 10545.00                   | 0.00                      | 16260.34                     | 0.00                        | 85000.00   | 1800.00            | Carta de Crédito - Individual | 5.50           | NOVO            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 210850   | Pindaré-Mirim               | MA     | Nordeste     | 2017-03-28                    | 1                  | 72000.00          | 6820.80                    | 0.00                      | 16000.00                     | 0.00                        | 90000.00   | 1874.00            | Carta de Crédito - Individual | 5.50           | NOVO            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 210850   | Pindaré-Mirim               | MA     | Nordeste     | 2017-06-27                    | 1                  | 72000.00          | 1665.00                    | 0.00                      | 16000.00                     | 0.00                        | 90000.00   | 2400.00            | Carta de Crédito - Individual | 6.00           | NOVO            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 210860   | Pinheiro                    | MA     | Nordeste     | 2019-11-12                    | 1                  | 104000.00         | 5020.00                    | 0.00                      | 21000.00                     | 0.00                        | 130000.00  | 2311.17            | Carta de Crédito - Individual | 5.00           | Novo            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 210860   | Pinheiro                    | MA     | Nordeste     | 2019-11-06                    | 1                  | 98000.00          | 3843.00                    | 0.00                      | 21000.00                     | 0.00                        | 130000.00  | 2417.71            | Carta de Crédito - Individual | 5.50           | Novo            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 210860   | Pinheiro                    | MA     | Nordeste     | 2019-04-09                    | 1                  | 90896.95          | 11429.10                   | 1269.90                   | 18900.00                     | 2100.00                     | 120000.00  | 1889.32            | Carta de Crédito - Individual | 5.50           | Novo            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 210860   | Pinheiro                    | MA     | Nordeste     | 2019-04-29                    | 1                  | 92000.00          | 13288.50                   | 1476.50                   | 18900.00                     | 2100.00                     | 130000.00  | 1800.00            | Carta de Crédito - Individual | 5.50           | Novo            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 210860   | Pinheiro                    | MA     | Nordeste     | 2018-08-27                    | 1                  | 90109.00          | 13266.90                   | 1474.10                   | 18900.00                     | 2100.00                     | 130000.00  | 1801.00            | Carta de Crédito - Individual | 5.50           | NOVO            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 210860   | Pinheiro                    | MA     | Nordeste     | 2018-05-08                    | 1                  | 90476.00          | 13161.60                   | 1462.40                   | 18900.00                     | 2100.00                     | 120000.00  | 1806.07            | Carta de Crédito - Individual | 5.50           | NOVO            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 210860   | Pinheiro                    | MA     | Nordeste     | 2019-11-04                    | 1                  | 92039.11          | 2113.00                    | 0.00                      | 21000.00                     | 0.00                        | 120000.00  | 2380.00            | Carta de Crédito - Individual | 5.50           | Novo            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 210860   | Pinheiro                    | MA     | Nordeste     | 2017-12-22                    | 1                  | 90235.00          | 14765.00                   | 0.00                      | 21000.00                     | 0.00                        | 130000.00  | 1800.00            | Carta de Crédito - Individual | 5.50           | NOVO            | X           |                         | 1900-01-01     | Faixa 1        |   126 | NULL         |                   | NI
+| 2025-12-05      | 211120   | São José de Ribamar         | MA     | Nordeste     | 2018-04-25                    | 1                  | 134450.00         | 0.00                       | 0.00                      | 0.00                         | 0.00                        | 178800.00  | 5364.58            | Carta de Crédito - Individual | 7.66           | NOVO            | X           |                         | 1900-01-01     | Faixa 3        |   126 | NULL         |                   | NI
+| 2025-12-05      | 211120   | São José de Ribamar         | MA     | Nordeste     | 2018-06-25                    | 1                  | 109589.50         | 10089.45                   | 1121.05                   | 18900.00                     | 2100.00                     | 173700.00  | 2075.10            | Carta de Crédito - Individual | 5.50           | NOVO            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 210980   | Santa Helena                | MA     | Nordeste     | 2017-04-27                    | 1                  | 76000.00          | 6395.13                    | 710.57                    | 14400.00                     | 1600.00                     | 95000.00   | 1850.00            | Carta de Crédito - Individual | 5.50           | NOVO            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 211250   | Tutóia                      | MA     | Nordeste     | 2017-10-11                    | 1                  | 90392.00          | 13608.00                   | 0.00                      | 21000.00                     | 0.00                        | 130000.00  | 1850.00            | Carta de Crédito - Individual | 5.50           | NOVO            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 210005   | Açailândia                  | MA     | Nordeste     | 2018-08-01                    | 1                  | 130000.00         | 0.00                       | 0.00                      | 0.00                         | 0.00                        | 145000.00  | 4955.86            | Carta de Crédito - Individual | 8.16           | NOVO            | X           |                         | 1900-01-01     | Faixa 3        |   126 | NULL         |                   | NI
+| 2025-12-05      | 210005   | Açailândia                  | MA     | Nordeste     | 2018-07-09                    | 1                  | 103174.40         | 1643.04                    | 182.56                    | 18900.00                     | 2100.00                     | 130000.00  | 2369.50            | Carta de Crédito - Individual | 5.50           | NOVO            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 210005   | Açailândia                  | MA     | Nordeste     | 2016-11-22                    | 1                  | 93925.00          | 10625.00                   | 0.00                      | 16000.00                     | 0.00                        | 120000.00  | 1953.88            | Carta de Crédito - Individual | 5.00           | novo            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 221100   | Teresina                    | PI     | Nordeste     | 2017-12-05                    | 1                  | 91534.52          | 8637.93                    | 959.77                    | 18900.00                     | 2100.00                     | 146000.00  | 2200.00            | Apoio à Produção              | 5.50           | NOVO            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 221100   | Teresina                    | PI     | Nordeste     | 2016-06-29                    | 1                  | 101662.00         | 1204.20                    | 133.80                    | 4143.66                      | 460.41                      | 144000.00  | 3297.42            | Apoio à Produção              | 7.00           | NOVO            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 220020   | Água Branca                 | PI     | Nordeste     | 2017-03-17                    | 1                  | 72000.00          | 6300.00                    | 700.00                    | 14400.00                     | 1600.00                     | 90000.00   | 1550.00            | Carta de Crédito - Individual | 5.50           | NOVO            | X           |                         | 1900-01-01     | Faixa 1        |   126 | NULL         |                   | NI
+| 2025-12-05      | 220030   | Alto Longá                  | PI     | Nordeste     | 2017-10-04                    | 1                  | 63758.10          | 5617.71                    | 624.19                    | 14400.00                     | 1600.00                     | 90000.00   | 1867.00            | Carta de Crédito - Individual | 5.50           | NOVO            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 220040   | Altos                       | PI     | Nordeste     | 2017-09-15                    | 1                  | 59125.00          | 16875.00                   | 0.00                      | 20969.16                     | 0.00                        | 76000.00   | 1800.00            | Carta de Crédito - Individual | 5.50           | NOVO            | X           |                         | 1900-01-01     | Faixa 1        |   126 | NULL         |                   | NI
+| 2025-12-05      | 220040   | Altos                       | PI     | Nordeste     | 2019-02-22                    | 1                  | 72000.00          | 10631.25                   | 1181.25                   | 18900.00                     | 2100.00                     | 90000.00   | 1750.83            | Carta de Crédito - Individual | 5.50           | Novo            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 220040   | Altos                       | PI     | Nordeste     | 2018-08-24                    | 1                  | 80000.00          | 10631.25                   | 1181.25                   | 18900.00                     | 2100.00                     | 100000.00  | 1750.00            | Carta de Crédito - Individual | 5.50           | NOVO            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 220160   | Beneditinos                 | PI     | Nordeste     | 2018-04-06                    | 1                  | 63125.00          | 15187.50                   | 1687.50                   | 18900.00                     | 2100.00                     | 90000.00   | 1762.50            | Carta de Crédito - Individual | 5.50           | NOVO            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 220270   | Cocal                       | PI     | Nordeste     | 2018-10-30                    | 1                  | 44200.00          | 10440.00                   | 1160.00                   | 15864.62                     | 1762.74                     | 60000.00   | 954.00             | Carta de Crédito - Individual | 5.50           | NOVO            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 220510   | Itaueira                    | PI     | Nordeste     | 2018-04-24                    | 1                  | 60000.00          | 6643.35                    | 738.15                    | 18900.00                     | 2100.00                     | 75000.00   | 1700.00            | Carta de Crédito - Individual | 5.50           | NOVO            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 220550   | José de Freitas             | PI     | Nordeste     | 2016-12-12                    | 1                  | 51000.00          | 14400.00                   | 1600.00                   | 14400.00                     | 1600.00                     | 67000.00   | 1700.00            | Carta de Crédito - Individual | 5.50           | novo            | X           |                         | 1900-01-01     | Faixa 1        |   126 | NULL         |                   | NI
+| 2025-12-05      | 220640   | Monsenhor Gil               | PI     | Nordeste     | 2019-04-29                    | 1                  | 73125.00          | 15187.50                   | 1687.50                   | 18900.00                     | 2100.00                     | 92000.00   | 1500.00            | Carta de Crédito - Individual | 5.50           | Novo            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 220700   | Oeiras                      | PI     | Nordeste     | 2017-01-30                    | 1                  | 84334.50          | 1165.50                    | 0.00                      | 4585.68                      | 0.00                        | 94000.00   | 3344.44            | Carta de Crédito - Individual | 7.00           | NOVO            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 220770   | Parnaíba                    | PI     | Nordeste     | 2017-09-29                    | 1                  | 68000.00          | 0.00                       | 0.00                      | 19716.40                     | 0.00                        | 80000.00   | 1837.09            | Carta de Crédito - Individual | 5.00           | USADO           | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 220830   | Piracuruca                  | PI     | Nordeste     | 2017-12-11                    | 1                  | 72000.00          | 11600.00                   | 0.00                      | 21000.00                     | 0.00                        | 90000.00   | 1800.00            | Carta de Crédito - Individual | 5.50           | NOVO            | X           |                         | 1900-01-01     | Faixa 1        |   126 | NULL         |                   | NI
+| 2025-12-05      | 220830   | Piracuruca                  | PI     | Nordeste     | 2017-09-19                    | 1                  | 71800.00          | 11600.00                   | 0.00                      | 21000.00                     | 0.00                        | 95000.00   | 1800.00            | Carta de Crédito - Individual | 5.50           | NOVO            | X           |                         | 1900-01-01     | Faixa 1        |   126 | NULL         |                   | NI
+| 2025-12-05      | 220840   | Piripiri                    | PI     | Nordeste     | 2018-07-20                    | 1                  | 83999.40          | 3100.65                    | 0.00                      | 21000.00                     | 0.00                        | 105000.00  | 1800.00            | Carta de Crédito - Individual | 5.50           | USADO           | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 221110   | União                       | PI     | Nordeste     | 2019-06-11                    | 1                  | 56000.00          | 7593.75                    | 843.75                    | 18823.94                     | 2091.55                     | 80000.00   | 1325.30            | Carta de Crédito - Individual | 5.50           | Novo            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 230440   | Fortaleza                   | CE     | Nordeste     | 2018-02-28                    | 1                  | 138868.00         | 0.00                       | 0.00                      | 0.00                         | 0.00                        | 216000.00  | 4810.47            | Pró-Cotista                   | 8.64           | NOVO            | X           |                         | 1900-01-01     | Fora MCMV      |   126 | NULL         |                   | NI
+| 2025-12-05      | 230440   | Fortaleza                   | CE     | Nordeste     | 2016-12-01                    | 1                  | 234200.00         | 0.00                       | 0.00                      | 0.00                         | 0.00                        | 234200.00  | 8855.43            | Pró-Cotista                   | 8.64           | Usado           | X           |                         | 1900-01-01     | Fora MCMV      |   126 | NULL         |                   | NI
+| 2025-12-05      | 230440   | Fortaleza                   | CE     | Nordeste     | 2017-08-30                    | 1                  | 40182.84          | 2012.22                    | 223.58                    | 3937.31                      | 437.48                      | 151000.00  | 2750.42            | Apoio à Produção              | 5.50           | NOVO            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 230440   | Fortaleza                   | CE     | Nordeste     | 2017-01-20                    | 1                  | 139500.00         | 0.00                       | 0.00                      | 0.00                         | 0.00                        | 155000.00  | 4950.00            | Carta de Crédito - Individual | 8.16           | NOVO            | X           |                         | 1900-01-01     | Faixa 3        |   126 | NULL         |                   | NI
+| 2025-12-05      | 230440   | Fortaleza                   | CE     | Nordeste     | 2019-03-14                    | 1                  | 145000.00         | 0.00                       | 0.00                      | 7880.86                      | 0.00                        | 185000.00  | 3270.65            | Carta de Crédito - Individual | 6.50           | Usado           | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 230440   | Fortaleza                   | CE     | Nordeste     | 2019-05-21                    | 1                  | 239000.00         | 0.00                       | 0.00                      | 0.00                         | 0.00                        | 300000.00  | 7248.65            | Pró-Cotista                   | 8.64           | Novo            | X           |                         | 1900-01-01     | Fora MCMV      |   126 | NULL         |                   | NI
+| 2025-12-05      | 230030   | Acopiara                    | CE     | Nordeste     | 2017-02-09                    | 1                  | 89800.00          | 4200.00                    | 0.00                      | 16000.00                     | 0.00                        | 115000.00  | 1760.00            | Carta de Crédito - Individual | 5.50           | USADO           | X           |                         | 1900-01-01     | Faixa 1        |   126 | NULL         |                   | NI
+| 2025-12-05      | 230130   | Araripe                     | CE     | Nordeste     | 2019-05-27                    | 1                  | 48188.43          | 0.00                       | 0.00                      | 0.00                         | 0.00                        | 68000.00   | 4934.40            | Carta de Crédito - Individual | 8.16           | Usado           | X           |                         | 1900-01-01     | Faixa 3        |   126 | NULL         |                   | NI
+| 2025-12-05      | 230190   | Barbalha                    | CE     | Nordeste     | 2019-11-21                    | 1                  | 100000.00         | 2225.00                    | 0.00                      | 19000.00                     | 0.00                        | 145000.00  | 2950.00            | Carta de Crédito - Individual | 5.50           | Novo            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 230370   | Caucaia                     | CE     | Nordeste     | 2019-06-10                    | 1                  | 91971.33          | 0.00                       | 0.00                      | 0.00                         | 0.00                        | 150000.00  | 5355.94            | Carta de Crédito - Individual | 8.16           | Usado           | X           |                         | 1900-01-01     | Faixa 3        |   126 | NULL         |                   | NI
+| 2025-12-05      | 230370   | Caucaia                     | CE     | Nordeste     | 2018-05-25                    | 1                  | 112000.00         | 1480.50                    | 164.50                    | 6377.26                      | 708.59                      | 140000.00  | 3393.01            | Carta de Crédito - Individual | 6.50           | NOVO            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 230420   | Crato                       | CE     | Nordeste     | 2018-11-09                    | 1                  | 87251.00          | 2248.20                    | 249.80                    | 18900.00                     | 2100.00                     | 121000.00  | 2500.00            | Carta de Crédito - Individual | 5.50           | NOVO            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 230420   | Crato                       | CE     | Nordeste     | 2017-06-26                    | 1                  | 87000.00          | 0.00                       | 0.00                      | 0.00                         | 0.00                        | 100000.00  | 2469.54            | Carta de Crédito - Individual | 5.00           | NOVO            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 230560   | Independência               | CE     | Nordeste     | 2018-02-27                    | 1                  | 71150.00          | 11600.00                   | 0.00                      | 21000.00                     | 0.00                        | 100000.00  | 1772.57            | Carta de Crédito - Individual | 5.50           | NOVO            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 230730   | Juazeiro do Norte           | CE     | Nordeste     | 2019-07-23                    | 1                  | 89851.97          | 18981.00                   | 2109.00                   | 18900.00                     | 2100.00                     | 145000.00  | 1750.00            | Carta de Crédito - Individual | 5.00           | Novo            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 230730   | Juazeiro do Norte           | CE     | Nordeste     | 2017-12-26                    | 1                  | 98000.00          | 2197.80                    | 244.20                    | 17100.00                     | 1900.00                     | 130000.00  | 2785.25            | Carta de Crédito - Individual | 5.50           | NOVO            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 230770   | Maranguape                  | CE     | Nordeste     | 2017-03-16                    | 1                  | 75700.81          | 18000.00                   | 2000.00                   | 14400.00                     | 1600.00                     | 120000.00  | 1437.94            | Carta de Crédito - Individual | 5.00           | NOVO            | X           |                         | 1900-01-01     | Faixa 1        |   126 | NULL         |                   | NI
+| 2025-12-05      | 230850   | Mombaça                     | CE     | Nordeste     | 2019-02-08                    | 1                  | 79915.00          | 9976.50                    | 1108.50                   | 18900.00                     | 2100.00                     | 100000.00  | 1828.75            | Carta de Crédito - Individual | 5.50           | Novo            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 230970   | Pacatuba                    | CE     | Nordeste     | 2018-06-07                    | 1                  | 95481.21          | 12881.70                   | 1431.30                   | 18900.00                     | 2100.00                     | 129800.00  | 1898.87            | Carta de Crédito - Individual | 5.00           | NOVO            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 230970   | Pacatuba                    | CE     | Nordeste     | 2019-02-06                    | 1                  | 116000.00         | 0.00                       | 0.00                      | 0.00                         | 0.00                        | 145000.00  | 4445.20            | Carta de Crédito - Individual | 7.66           | Novo            | X           |                         | 1900-01-01     | Faixa 3        |   126 | NULL         |                   | NI
+| 2025-12-05      | 230970   | Pacatuba                    | CE     | Nordeste     | 2019-04-18                    | 1                  | 114400.00         | 2029.50                    | 225.50                    | 6288.44                      | 698.72                      | 143000.00  | 3110.75            | Apoio à Produção              | 6.50           | Novo            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 231130   | Quixadá                     | CE     | Nordeste     | 2017-11-23                    | 1                  | 92955.00          | 1840.50                    | 204.50                    | 17100.00                     | 1900.00                     | 117000.00  | 2700.00            | Carta de Crédito - Individual | 6.00           | NOVO            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 231140   | Quixeramobim                | CE     | Nordeste     | 2019-01-02                    | 1                  | 120000.00         | 0.00                       | 0.00                      | 0.00                         | 0.00                        | 150000.00  | 7706.52            | Pró-Cotista                   | 8.46           | Novo            | X           |                         | 1900-01-01     | Fora MCMV      |   126 | NULL         |                   | NI
+| 2025-12-05      | 231340   | Tianguá                     | CE     | Nordeste     | 2018-02-07                    | 1                  | 85664.50          | 9301.95                    | 1033.55                   | 18900.00                     | 2100.00                     | 124000.00  | 1800.00            | Carta de Crédito - Individual | 5.50           | NOVO            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 230765   | Maracanaú                   | CE     | Nordeste     | 2019-11-14                    | 1                  | 99999.00          | 8086.00                    | 0.00                      | 21000.00                     | 0.00                        | 125000.00  | 2458.94            | Carta de Crédito - Individual | 5.00           | Novo            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 230765   | Maracanaú                   | CE     | Nordeste     | 2017-06-06                    | 1                  | 104399.00         | 11403.90                   | 1267.10                   | 14400.00                     | 1600.00                     | 150000.00  | 2219.00            | Carta de Crédito - Individual | 5.00           | NOVO            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 230765   | Maracanaú                   | CE     | Nordeste     | 2017-02-17                    | 1                  | 112000.00         | 5687.64                    | 631.96                    | 14400.00                     | 1600.00                     | 140000.00  | 2422.97            | Carta de Crédito - Individual | 5.50           | NOVO            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 230765   | Maracanaú                   | CE     | Nordeste     | 2017-10-03                    | 1                  | 115984.00         | 2115.00                    | 235.00                    | 5511.98                      | 612.45                      | 145000.00  | 3453.73            | Carta de Crédito - Individual | 6.50           | NOVO            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 230765   | Maracanaú                   | CE     | Nordeste     | 2018-11-20                    | 1                  | 102316.67         | 6316.38                    | 701.82                    | 18900.00                     | 2100.00                     | 146700.00  | 2397.01            | Carta de Crédito - Individual | 5.00           | NOVO            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 240810   | Natal                       | RN     | Nordeste     | 2018-05-17                    | 1                  | 96081.41          | 14285.70                   | 1587.30                   | 18900.00                     | 2100.00                     | 143000.00  | 2082.78            | Apoio à Produção              | 5.00           | NOVO            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 240810   | Natal                       | RN     | Nordeste     | 2017-06-29                    | 1                  | 119448.52         | 0.00                       | 0.00                      | 0.00                         | 0.00                        | 156000.00  | 5336.07            | Apoio à Produção              | 7.66           | NOVO            | X           |                         | 1900-01-01     | Faixa 3        |   126 | NULL         |                   | NI
+| 2025-12-05      | 240170   | Bom Jesus                   | RN     | Nordeste     | 2018-08-21                    | 1                  | 68855.00          | 9490.50                    | 1054.50                   | 18900.00                     | 2100.00                     | 90000.00   | 1568.74            | Carta de Crédito - Individual | 5.50           | NOVO            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 240200   | Caicó                       | RN     | Nordeste     | 2017-07-20                    | 1                  | 87369.39          | 0.00                       | 0.00                      | 0.00                         | 0.00                        | 137500.00  | 7143.12            | Pró-Cotista                   | 8.46           | NOVO            | X           |                         | 1900-01-01     | Fora MCMV      |   126 | NULL         |                   | NI
+| 2025-12-05      | 240260   | Ceará-Mirim                 | RN     | Nordeste     | 2019-03-01                    | 1                  | 88255.00          | 15070.50                   | 1674.50                   | 18900.00                     | 2100.00                     | 112000.00  | 1805.00            | Carta de Crédito - Individual | 5.00           | Novo            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 240260   | Ceará-Mirim                 | RN     | Nordeste     | 2017-11-17                    | 1                  | 53125.00          | 15187.50                   | 1687.50                   | 17207.98                     | 1912.00                     | 70000.00   | 1800.00            | Carta de Crédito - Individual | 5.50           | NOVO            | X           |                         | 1900-01-01     | Faixa 1        |   126 | NULL         |                   | NI
+| 2025-12-05      | 240260   | Ceará-Mirim                 | RN     | Nordeste     | 2018-04-18                    | 1                  | 68125.00          | 16875.00                   | 0.00                      | 21000.00                     | 0.00                        | 90000.00   | 1750.00            | Carta de Crédito - Individual | 5.50           | NOVO            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 240260   | Ceará-Mirim                 | RN     | Nordeste     | 2018-03-28                    | 1                  | 53187.50          | 10631.25                   | 1181.25                   | 18195.53                     | 2021.73                     | 70000.00   | 1799.33            | Carta de Crédito - Individual | 5.50           | NOVO            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 240330   | Encanto                     | RN     | Nordeste     | 2017-01-20                    | 1                  | 50000.00          | 9000.00                    | 1000.00                   | 13536.48                     | 1504.05                     | 65000.00   | 1500.00            | Carta de Crédito - Individual | 5.50           | NOVO            | X           |                         | 1900-01-01     | Faixa 1        |   126 | NULL         |                   | NI
+| 2025-12-05      | 240360   | Extremoz                    | RN     | Nordeste     | 2016-11-28                    | 1                  | 81500.00          | 16000.00                   | 0.00                      | 16000.00                     | 0.00                        | 105000.00  | 1555.84            | Carta de Crédito - Individual | 5.00           | novo            | X           |                         | 1900-01-01     | Faixa 1        |   126 | NULL         |                   | NI
+| 2025-12-05      | 240360   | Extremoz                    | RN     | Nordeste     | 2020-07-02                    | 1                  | 73125.00          | 16875.00                   | 0.00                      | 21000.00                     | 0.00                        | 115000.00  | 1395.74            | Carta de Crédito - Individual | 5.00           | Novo            | S           | price                   | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 240360   | Extremoz                    | RN     | Nordeste     | 2017-11-24                    | 1                  | 83125.00          | 16875.00                   | 0.00                      | 21000.00                     | 0.00                        | 105000.00  | 1765.80            | Carta de Crédito - Individual | 5.00           | NOVO            | X           |                         | 1900-01-01     | Faixa 1        |   126 | NULL         |                   | NI
+| 2025-12-05      | 240370   | Felipe Guerra               | RN     | Nordeste     | 2017-10-10                    | 1                  | 63000.00          | 9490.50                    | 1054.50                   | 18900.00                     | 2100.00                     | 90000.00   | 1600.00            | Carta de Crédito - Individual | 5.50           | NOVO            | X           |                         | 1900-01-01     | Faixa 1        |   126 | NULL         |                   | NI
+| 2025-12-05      | 240500   | Jaçanã                      | RN     | Nordeste     | 2017-03-27                    | 1                  | 46800.00          | 9000.00                    | 1000.00                   | 14400.00                     | 1600.00                     | 62000.00   | 1800.00            | Carta de Crédito - Individual | 5.50           | NOVO            | X           |                         | 1900-01-01     | Faixa 1        |   126 | NULL         |                   | NI
+| 2025-12-05      | 240530   | Januário Cicco              | RN     | Nordeste     | 2019-05-03                    | 1                  | 73360.00          | 0.00                       | 0.00                      | 19000.00                     | 0.00                        | 95000.00   | 2842.00            | Carta de Crédito - Individual | 5.50           | Usado           | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 240710   | Macaíba                     | RN     | Nordeste     | 2018-05-10                    | 1                  | 78417.00          | 16583.00                   | 0.00                      | 21000.00                     | 0.00                        | 100000.00  | 1811.25            | Carta de Crédito - Individual | 5.00           | NOVO            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 240710   | Macaíba                     | RN     | Nordeste     | 2018-03-20                    | 1                  | 87925.00          | 15187.50                   | 1687.50                   | 18900.00                     | 2100.00                     | 110000.00  | 1800.00            | Carta de Crédito - Individual | 5.50           | NOVO            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 240710   | Macaíba                     | RN     | Nordeste     | 2018-11-08                    | 1                  | 79867.00          | 2099.70                    | 233.30                    | 17100.00                     | 1900.00                     | 113000.00  | 2696.85            | Carta de Crédito - Individual | 6.00           | NOVO            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 240710   | Macaíba                     | RN     | Nordeste     | 2017-03-16                    | 1                  | 92000.00          | 14400.00                   | 1600.00                   | 14400.00                     | 1600.00                     | 115000.00  | 1780.63            | Carta de Crédito - Individual | 5.00           | NOVO            | X           |                         | 1900-01-01     | Faixa 1        |   126 | NULL         |                   | NI
+| 2025-12-05      | 240710   | Macaíba                     | RN     | Nordeste     | 2019-11-19                    | 1                  | 88000.00          | 2225.00                    | 0.00                      | 19000.00                     | 0.00                        | 115000.00  | 2817.87            | Carta de Crédito - Individual | 6.00           | Novo            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 240800   | Mossoró                     | RN     | Nordeste     | 2018-08-13                    | 1                  | 80500.00          | 13088.88                   | 1454.32                   | 18900.00                     | 2100.00                     | 115000.00  | 1817.00            | Carta de Crédito - Individual | 5.00           | NOVO            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 240800   | Mossoró                     | RN     | Nordeste     | 2017-06-20                    | 1                  | 69900.00          | 18981.00                   | 2109.00                   | 18900.00                     | 2100.00                     | 118000.00  | 1800.00            | Carta de Crédito - Individual | 5.50           | NOVO            | X           |                         | 1900-01-01     | Faixa 1        |   126 | NULL         |                   | NI
+| 2025-12-05      | 240800   | Mossoró                     | RN     | Nordeste     | 2017-05-11                    | 1                  | 93300.00          | 16830.00                   | 1870.00                   | 14400.00                     | 1600.00                     | 117000.00  | 1874.28            | Carta de Crédito - Individual | 5.00           | NOVO            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 240800   | Mossoró                     | RN     | Nordeste     | 2019-06-07                    | 1                  | 79410.00          | 18981.00                   | 2109.00                   | 18900.00                     | 2100.00                     | 125000.00  | 1750.00            | Carta de Crédito - Individual | 5.50           | Novo            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 240800   | Mossoró                     | RN     | Nordeste     | 2018-01-17                    | 1                  | 89410.00          | 18981.00                   | 2109.00                   | 18900.00                     | 2100.00                     | 120000.00  | 1800.00            | Carta de Crédito - Individual | 5.50           | NOVO            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 240800   | Mossoró                     | RN     | Nordeste     | 2017-08-29                    | 1                  | 90972.90          | 13074.39                   | 1452.71                   | 18900.00                     | 2100.00                     | 116000.00  | 1818.23            | Carta de Crédito - Individual | 5.50           | NOVO            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 240800   | Mossoró                     | RN     | Nordeste     | 2017-06-09                    | 1                  | 73500.00          | 16632.90                   | 1848.10                   | 18900.00                     | 2100.00                     | 105000.00  | 1941.41            | Carta de Crédito - Individual | 5.50           | NOVO            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 240800   | Mossoró                     | RN     | Nordeste     | 2017-12-08                    | 1                  | 80500.00          | 18981.00                   | 2109.00                   | 18900.00                     | 2100.00                     | 115000.00  | 1800.00            | Carta de Crédito - Individual | 5.50           | NOVO            | X           |                         | 1900-01-01     | Faixa 1        |   126 | NULL         |                   | NI
+| 2025-12-05      | 240890   | Parelhas                    | RN     | Nordeste     | 2019-02-12                    | 1                  | 72000.00          | 2436.00                    | 0.00                      | 21000.00                     | 0.00                        | 90000.00   | 1431.00            | Carta de Crédito - Individual | 5.00           | Usado           | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 241100   | Rodolfo Fernandes           | RN     | Nordeste     | 2017-05-24                    | 1                  | 50000.00          | 9000.00                    | 1000.00                   | 14400.00                     | 1600.00                     | 74669.68   | 1218.22            | Carta de Crédito - Individual | 5.00           | NOVO            | X           |                         | 1900-01-01     | Faixa 1        |   126 | NULL         |                   | NI
+| 2025-12-05      | 241120   | Santa Cruz                  | RN     | Nordeste     | 2017-05-02                    | 1                  | 68000.00          | 11000.00                   | 0.00                      | 16000.00                     | 0.00                        | 85000.00   | 1527.08            | Carta de Crédito - Individual | 5.50           | NOVO            | X           |                         | 1900-01-01     | Faixa 1        |   126 | NULL         |                   | NI
+| 2025-12-05      | 241200   | São Gonçalo do Amarante     | RN     | Nordeste     | 2017-02-06                    | 1                  | 84000.00          | 16000.00                   | 0.00                      | 16000.00                     | 0.00                        | 105000.00  | 1680.00            | Carta de Crédito - Individual | 5.50           | NOVO            | X           |                         | 1900-01-01     | Faixa 1        |   126 | NULL         |                   | NI
+| 2025-12-05      | 521975   | Santo Antônio do Descoberto | GO     | Centro-Oeste | 2018-10-24                    | 1                  | 83000.00          | 0.00                       | 0.00                      | 21000.00                     | 0.00                        | 121000.00  | 2350.00            | Carta de Crédito - Individual | 5.50           | USADO           | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 110013   | Machadinho D'Oeste          | RO     | Norte        | 2018-03-20                    | 1                  | 78997.21          | 9247.50                    | 1027.50                   | 18900.01                     | 2100.00                     | 100000.00  | 1874.00            | Carta de Crédito - Individual | 5.00           | NOVO            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 250750   | João Pessoa                 | PB     | Nordeste     | 2018-06-06                    | 1                  | 68667.00          | 18299.70                   | 2033.30                   | 18900.00                     | 2100.00                     | 120000.00  | 1841.00            | Carta de Crédito - Individual | 5.00           | NOVO            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 250750   | João Pessoa                 | PB     | Nordeste     | 2018-03-08                    | 1                  | 90000.00          | 0.00                       | 0.00                      | 21000.00                     | 0.00                        | 125000.00  | 1854.62            | Carta de Crédito - Individual | 5.50           | USADO           | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 250750   | João Pessoa                 | PB     | Nordeste     | 2017-11-22                    | 1                  | 262200.00         | 0.00                       | 0.00                      | 0.00                         | 0.00                        | 328000.00  | 10902.03           | Pró-Cotista                   | 8.64           | NOVO            | X           |                         | 1900-01-01     | Fora MCMV      |   126 | NULL         |                   | NI
+| 2025-12-05      | 250750   | João Pessoa                 | PB     | Nordeste     | 2017-01-05                    | 1                  | 119334.00         | 7266.00                    | 0.00                      | 16000.00                     | 0.00                        | 160000.00  | 2350.00            | Carta de Crédito - Individual | 5.50           | NOVO            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 250750   | João Pessoa                 | PB     | Nordeste     | 2019-01-11                    | 1                  | 227600.00         | 0.00                       | 0.00                      | 0.00                         | 0.00                        | 290000.00  | 20454.89           | Pró-Cotista                   | 8.64           | Novo            | X           |                         | 1900-01-01     | Fora MCMV      |   126 | NULL         |                   | NI
+| 2025-12-05      | 250750   | João Pessoa                 | PB     | Nordeste     | 2018-08-31                    | 1                  | 94400.00          | 8870.40                    | 985.60                    | 18900.00                     | 2100.00                     | 118000.00  | 2180.00            | Carta de Crédito - Individual | 5.50           | NOVO            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 250070   | São João do Rio do Peixe    | PB     | Nordeste     | 2018-08-21                    | 1                  | 76000.00          | 6643.35                    | 738.15                    | 18900.00                     | 2100.00                     | 95000.00   | 1800.00            | Carta de Crédito - Individual | 5.50           | NOVO            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
+| 2025-12-05      | 250370   | Cajazeiras                  | PB     | Nordeste     | 2017-01-30                    | 1                  | 95652.63          | 14000.00                   | 0.00                      | 16000.00                     | 0.00                        | 120000.00  | 1777.49            | Carta de Crédito - Individual | 5.00           | NOVO            | X           |                         | 1900-01-01     | Faixa 1        |   126 | NULL         |                   | NI
+| 2025-12-05      | 250370   | Cajazeiras                  | PB     | Nordeste     | 2018-01-17                    | 1                  | 88380.00          | 14765.00                   | 0.00                      | 21000.00                     | 0.00                        | 120000.00  | 1800.00            | Carta de Crédito - Individual | 5.50           | NOVO            | X           |                         | 1900-01-01     | Faixa 2        |   126 | NULL         |                   | NI
++-----------------+----------+-----------------------------+--------+--------------+-------------------------------+--------------------+-------------------+----------------------------+---------------------------+------------------------------+-----------------------------+------------+--------------------+-------------------------------+----------------+-----------------+-------------+-------------------------+----------------+---------------------------------+-------------------------+---------+-------+--------------+
+135 rows in set (0.02 sec)
+
+mysql> start transaction;
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> update tb_financiamento
+    -> set dte_nascimento = NULL,
+    -> idade = 0
+    -> where dte_nascimento = '1900-01-01';
+Query OK, 135 rows affected (0.20 sec)
+Rows matched: 135  Changed: 135  Warnings: 0
+
+mysql> select count(*) from tb_financiamento
+    -> where dte_nascimento = '1900-01-01';
++----------+
+| count(*) |
++----------+
+|        0 |
++----------+
+1 row in set (0.01 sec)
+
+mysql> commit;
+Query OK, 0 rows affected (0.17 sec)
+
+mysql> select min(idade), max(idade)
+    -> from tb_financiamento
+    -> where idade <> 0;
++------------+------------+
+| min(idade) | max(idade) |
++------------+------------+
+|         19 |         78 |
++------------+------------+
+1 row in set (0.01 sec)
+
+select idade,
+       CASE 
+	    WHEN idade between 19 and 25 THEN '19-25'
+	    WHEN idade between 26 and 35 THEN '26-35'
+	    WHEN idade between 36 and 45 THEN '36-45'
+	    WHEN idade between 46 and 55 THEN '46-55'
+	    WHEN idade between 55 and 65 THEN '55-65'
+	  ELSE 'acima de 65' 
+	   END AS 'Faixa Etaria'
+from tb_financiamento 
+where idade <> 0;
+
+# idade	Faixa Etaria
+25	19-25
+28	26-35
+34	26-35
+54	46-55
+28	26-35
+27	26-35
+28	26-35
+29	26-35
+24	19-25
+27	26-35
+
+	
+
+start transaction;
+
+update tb_financiamento
+set faixa_etaria = CASE 
+	    WHEN idade between 19 and 25 THEN '19-25'
+	    WHEN idade between 26 and 35 THEN '26-35'
+	    WHEN idade between 36 and 45 THEN '36-45'
+	    WHEN idade between 46 and 55 THEN '46-55'
+	    WHEN idade between 55 and 65 THEN '55-65'
+	  ELSE 'acima de 65' 
+	   END
+	where idade <> 0;   
+Query OK, 6888 rows affected (0.48 sec)
+Rows matched: 6888  Changed: 6888  Warnings: 0
+
+
+select idade, faixa_etaria
+from tb_financiamento
+where idade <> 0;   
++-------+--------------+
+| idade | faixa_etaria |
++-------+--------------+
+|    25 | 19-25        |
+|    28 | 26-35        |
+|    34 | 26-35        |
+|    54 | 46-55        |
+|    28 | 26-35        |
+|    27 | 26-35        |
+|    28 | 26-35        |
+|    29 | 26-35        |
+|    24 | 19-25        |
+|    27 | 26-35        |
+|    33 | 26-35        |
+|    30 | 26-35        |
+|    28 | 26-35        |
+|    59 | 55-65        |
+|    34 | 26-35        |
+|    28 | 26-35        |
+|    25 | 19-25        |
+|    26 | 26-35        |
+|    56 | 55-65        |
+|    33 | 26-35        |
+|    46 | 46-55        |
+|    41 | 36-45        |
+|    35 | 26-35        |
+|    30 | 26-35        |
+|    35 | 26-35        |
+|    28 | 26-35        |
+
+mysql> commit;
+Query OK, 0 rows affected (0.05 sec)
+	   
+	   
