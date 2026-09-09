@@ -127,6 +127,7 @@
 
     A base de dados original em arquivo CSV está disponível para download no endereço: https://www.gov.br/cidades/pt-br/acesso-a-informacao/acoes-e-programas/habitacao/programa-minha-casa-minha-vida/bases-de-dados-do-programa-minha-casa-minha-vida/Contratos do MCMV-Financiado com recursos do FGTS e do FS (dados analíticos) 
     Os arquivos com os scripts sql estão na pasta: scripts_sql
+    A análise completa com os resultados das consultas sql estão no arquivo: analise_dados_mcmv.pdf
 
 
     Passos:
